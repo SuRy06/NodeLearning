@@ -14,7 +14,7 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
 );
 
-// testing
+// testing again
 app.get('/api/v1/tours', (req, res) => {
   res.status(200).json({
     status: 'success',
