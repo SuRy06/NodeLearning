@@ -3,6 +3,8 @@ const fs = require('fs');
 
 const app = express();
 
+app.use(express.json());
+
 // app.get('/', (req, res) => {
 //   //   res.status(200).send('Hello from the server side!');
 //   res
