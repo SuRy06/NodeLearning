@@ -6,29 +6,25 @@ const router = express.Router();
 
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
-
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
-router.patch(
-  '/updateMyPassword',
-  authController.protect,
-  authController.updatePassword
-);
-router.patch(
-  '/updateMe',
-  authController.protect,
-  userController.updateMe
-);
-router.delete(
-  '/deleteMe',
-  authController.protect,
-  userController.deleteMe
-);
+
+// Protect All routes after this middleware
+router.use(authController.protect);
+
+router.patch('/updateMyPassword', authController.updatePassword);
+router.get('/me', userController.getMe, userController.getUser);
+router.patch('/updateMe', userController.updateMe);
+router.delete('/deleteMe', userController.deleteMe);
+
+// From this poin onwards the routes are not only protected but even restriced!
+router.use(authController.restrictTo('admin'));
 
 router
   .route('/')
   .get(userController.getAllUsers)
   .post(userController.createUser);
+
 router
   .route('/:id')
   .get(userController.getUser)

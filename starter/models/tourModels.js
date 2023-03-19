@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const User = require('./userModel');
 // const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
@@ -35,6 +36,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be above 5.0'],
+      set: (val) => Math.round(val * 10) / 10, //set is used so that, it runs everytime a new value is set here fo this field. It receives a callback funcation that gets the recent value of the field, as a param. Here set is used to get a rounded figure in one decimal point.
     },
     ratingsQuantity: {
       type: Number,
@@ -78,6 +80,32 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    startLocation: {
+      // GeoJSON
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    // guides: Array, //FOR EMBEDDING WITH DIFFERENT DOCUMENT
+    guides: [{ type: mongoose.Schema.ObjectId, ref: 'User' }], //FOR REFRENCING WITH DIFFERENT DOCUMENT
   },
   {
     toJSON: { virtuals: true },
@@ -85,8 +113,23 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
+// THIS IS USED FOR INDEXING OF THE PRICE IN TOUR DOCUMENTS.
+// tourSchema.index({ price: 1 });
+
+// This is used for compound indexing.
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' }); //for geospatial data the index needs to be 2d sphere index if the data describes real point in the earth like sphere. or we can use 2d index if we are implementing frictional points in 2d plane. "startLocation: '2dsphere'" with this we are basically telling mondoDB that the start location here should be indexed to the a 2d sphere.So a earth like sphere where our data are located. // We are using "startLocation"field to calculate the distances here.
+
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
+});
+
+// THIS IS VIRTUAL POPULATE
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
 });
 
 // DOCUMNET MIDDLEWARE/HOOKS: runs before .save() and .create() and not others
@@ -94,6 +137,15 @@ tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
+
+// // EMBEDING WITH DIFFERNT DOCUMENT.
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromises = this.guides.map(async (id) => await User.findById(id));
+
+//   this.guides = await Promise.all(guidesPromises);
+
+//   next();
+// });
 
 // tourSchema.pre('save', function (next) {
 //   console.log('Will save Doc.....');
@@ -116,16 +168,25 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+  next();
+});
+
 tourSchema.post(/^find/, function (docs, next) {
   console.log(`Query took ${Date.now() - this.start} milliseconds!`);
   next();
 });
 
 // AGGREGATION MIDDLEWARE
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
-  next();
-});
+// what this below code here does, is to add this matched stage i.e "$match: { secretTour: { $ne: true } }" here beofore all the stages.
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+//   next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 
