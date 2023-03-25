@@ -1,8 +1,9 @@
 doctype html
 html
     head
+      block head
         meta(charset='UTF-8')
-        meta(name='viewport' content='width=device-width,         initial-scale=1.0')
+        meta(name='viewport' content='width=device-width, initial-scale=1.0')
         link(rel='stylesheet' href='/css/style.css')
         link(rel='shortcut icon' type='image/png' href='/img/favicon.png')
         link(rel='stylesheet' href='https://fonts.googleapis.com/css?family=Lato:300,300i,700')
@@ -18,6 +19,8 @@ html
 
     //FOOTER
     include _footer
+    //- script(src=`/node_modules/axios/dist/axios.min.js` type="module")
+    script(src="/js/login.js") 
 
 
 

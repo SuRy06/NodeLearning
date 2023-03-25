@@ -78,6 +78,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  }else if(req.cookies.jwt){
+    token = req.cookies.jwt
   }
 
   if (!token) {
@@ -109,6 +111,34 @@ exports.protect = catchAsync(async (req, res, next) => {
   // GRANT ACCESS TO PROTECTED ROUTE
   req.user = currentUser;
   next();
+});
+
+// This middleware is really only for reandered pages, the goal of this is not to protect any route, so there will be no error in this middleware.
+exports.isLoggedIn = catchAsync(async (req, res, next) => {
+  // 1) GETTING TOKEN AND CHECKING IF ITS EXISTS
+  //Our token should come from cookies and not from authorization headers, because for render pages we will not have the token in the header. It will be with the cookies.
+ if(req.cookies.jwt){
+  let token = req.cookies.jwt
+  // 1) VALIDATE/VARIFICATION OF TOKEN
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log(decoded);
+
+  // 2) CHECK IF USER STILL EXISTS
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    return next();
+  }
+
+  // 3) CHECK IF USER CHANGE PASSWORD AFTER THE TOKEN IS ISSUED
+  if (currentUser.changePasswordAfter(decoded.iat)) {
+    return next();
+  }
+
+  // There is a logged in User
+  res.locals.user =  currentUser//-"res.locals.user"this means that that all the pug template will have the variable "user" that is mentioned here. What ever we put in "res.locals.user" will be the variables of the templates.It is like passing data into a template using the render function.
+  return next();
+}
+next();
 });
 
 exports.restrictTo = (...roles) => {

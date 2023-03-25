@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser')
 
 // MOUNTING OF ROUTES
 const AppError = require('./utils/appError');
@@ -17,6 +18,7 @@ const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
 
+app.engine('pug', require('pug').__express)
 app.set('view engine', 'pug'); //this piece of code here tells express which templating engine to use. pug templates are called "views".
 app.set('views', path.join(__dirname, 'views')); //"path.join(__dirname, 'views')" this will behind the scenes will then, join the directory name with views. By using this node will automatically create the correct path.
 
@@ -28,7 +30,7 @@ app.set('views', path.join(__dirname, 'views')); //"path.join(__dirname, 'views'
 app.use(express.static(path.join(__dirname, 'public'))); //"express.static"by using this code, we define that, all the static assets will, automatically be served from a folder called 'public'.
 
 // *Set security HTTP headers
-app.use(helmet());
+app.use(helmet())
 
 // *Developmetn Logging
 if (process.env.NODE_ENV === 'development') {
@@ -45,7 +47,8 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // *Body Parser, reading data from body into req.body
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '10kb' })); //-This is a body parser thar parses the data from the body.
+app.use(cookieParser()); //-This is a cookie parser that parses the data from the cookie, that comes in with the request.
 
 // Data sanitizaation against NoSQL query injection
 app.use(mongoSanitize());
@@ -70,6 +73,8 @@ app.use(
 // *Test middleware
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
+  console.log(req.headers);
+  console.log(req.cookies);
   next();
 });
 
