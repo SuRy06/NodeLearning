@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(function (req, res, next) {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' https: ; style-src 'self' https: 'unsafe-inline'; font-src 'self' https:; img-src 'self'; frame-src 'self'; connect-src 'self' ws://127.0.0.1:64090/ ws://127.0.0.1:54285/"
+    "default-src 'self'; script-src 'self' https: ; style-src 'self' https: 'unsafe-inline'; font-src 'self' https:; img-src 'self'; frame-src 'self'; connect-src 'self' ws://127.0.0.1:64090/ ws://127.0.0.1:54285/ ws://127.0.0.1:59878/"
   );
 
   next();
